@@ -423,7 +423,8 @@ pub struct DateRangeInner<'a> {
 }
 
 impl<'a> DateRange<'a> {
-    add_extra_option!(with_format, format, &'a str);
+    // HACK: Using another HACK in common.rs
+    // add_extra_option!(with_format, format, &'a str);
 
     pub fn with_ranges<A: Into<Vec<DateRangeInst<'a>>>>(mut self, ranges: A) -> Self {
         self.0.extra.ranges = ranges.into();
