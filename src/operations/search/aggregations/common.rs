@@ -49,6 +49,13 @@ macro_rules! agg {
                 self.0.missing = Some(missing.into());
                 self
             }
+
+            // HACK: This is only applicable to metric base aggregations
+            // https://github.com/elastic/elasticsearch/pull/9032
+            pub fn with_format<J: Into<JsonVal>>(mut self, format: J) -> Self {
+                self.0.format = Some(format.into());
+                self
+            }
         }
 
         impl<'a> Serialize for $b<'a> {
@@ -80,6 +87,7 @@ where
     pub field: Option<&'a str>,
     pub script: Script<'a>,
     pub missing: Option<JsonVal>,
+    pub format: Option<JsonVal>,
     pub extra: E,
 }
 
