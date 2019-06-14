@@ -137,7 +137,7 @@ pub enum AggregationResult {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct AggregationsResult(HashMap<String, AggregationResult>);
+pub struct AggregationsResult(pub HashMap<String, AggregationResult>);
 
 /// Loads a Json object of aggregation results into an `AggregationsResult`.
 fn object_to_result(
