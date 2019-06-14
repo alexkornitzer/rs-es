@@ -116,6 +116,7 @@ where
         serialize_map_optional_kv(&mut map, "id", &self.script.id)?;
         serialize_map_optional_kv(&mut map, "params", &self.script.params)?;
         serialize_map_optional_kv(&mut map, "missing", &self.missing)?;
+        serialize_map_optional_kv(&mut map, "format", &self.format)?;
         self.extra.merge_serialize(&mut map)?;
 
         map.end()
