@@ -50,6 +50,11 @@ macro_rules! agg {
                 self
             }
 
+            pub fn with_value_type(mut self, value_type: &'a str) -> Self {
+                self.0.value_type = Some(value_type);
+                self
+            }
+
             // HACK: This is only applicable to metric base aggregations
             // https://github.com/elastic/elasticsearch/pull/9032
             pub fn with_format<J: Into<JsonVal>>(mut self, format: J) -> Self {
@@ -88,6 +93,7 @@ where
     pub script: Script<'a>,
     pub missing: Option<JsonVal>,
     pub format: Option<JsonVal>,
+    pub value_type: Option<&'a str>,
     pub extra: E,
 }
 
@@ -117,6 +123,7 @@ where
         serialize_map_optional_kv(&mut map, "params", &self.script.params)?;
         serialize_map_optional_kv(&mut map, "missing", &self.missing)?;
         serialize_map_optional_kv(&mut map, "format", &self.format)?;
+        serialize_map_optional_kv(&mut map, "value_type", &self.value_type)?;
         self.extra.merge_serialize(&mut map)?;
 
         map.end()
