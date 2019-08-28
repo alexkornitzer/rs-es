@@ -142,7 +142,8 @@ pub struct IndexResult {
     pub id: String,
     #[serde(rename = "_version")]
     pub version: u64,
-    pub created: bool,
+    #[serde(default)]
+    pub created: Option<bool>,  // NOTE: Removed in ES6
 }
 
 #[cfg(test)]
@@ -166,7 +167,7 @@ pub mod tests {
                 .send();
             println!("TEST RESULT: {:?}", result_wrapped);
             let result = result_wrapped.unwrap();
-            assert_eq!(result.created, true);
+            assert_eq!(result.created, Some(true));
             assert_eq!(result.index, index_name);
             assert_eq!(result.doc_type, "test_type");
             assert!(!result.id.is_empty());
@@ -181,7 +182,7 @@ pub mod tests {
                 .send();
             let result = result_wrapped.unwrap();
 
-            assert_eq!(result.created, true);
+            assert_eq!(result.created, Some(true));
             assert_eq!(result.index, index_name);
             assert_eq!(result.doc_type, "test_type");
             assert_eq!(result.id, "TEST_INDEXING_2");
