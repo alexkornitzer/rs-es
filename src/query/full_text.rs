@@ -30,6 +30,7 @@ use super::{common::FieldBasedQuery, Flags, Fuzziness, MinimumShouldMatch, Query
 #[derive(Debug, Clone)]
 pub enum MatchType {
     Boolean,
+    // TODO: Deprecated
     Phrase,
     PhrasePrefix,
 }
@@ -42,6 +43,7 @@ impl Serialize for MatchType {
         use self::MatchType::*;
         match self {
             Boolean => "boolean",
+            // TODO: Deprecated
             Phrase => "phrase",
             PhrasePrefix => "phrase_prefix",
         }
@@ -173,6 +175,75 @@ impl MatchQuery {
     add_inner_field!(with_highlight, highlight, Highlight);
 
     build!(Match);
+}
+
+/// Match Phrase query
+
+#[derive(Debug, Serialize)]
+pub struct MatchPhraseQuery(FieldBasedQuery<MatchPhraseQueryInner, NoOuter>);
+
+#[derive(Debug, Default, Serialize)]
+pub struct MatchPhraseQueryInner {
+    query: JsonVal,
+    #[serde(skip_serializing_if = "ShouldSkip::should_skip")]
+    analyzer: Option<String>,
+    #[serde(skip_serializing_if = "ShouldSkip::should_skip")]
+    boost: Option<f64>,
+    #[serde(skip_serializing_if = "ShouldSkip::should_skip")]
+    fuzziness: Option<Fuzziness>,
+    #[serde(skip_serializing_if = "ShouldSkip::should_skip")]
+    lenient: Option<bool>,
+    #[serde(skip_serializing_if = "ShouldSkip::should_skip")]
+    max_expansions: Option<u64>,
+    #[serde(skip_serializing_if = "ShouldSkip::should_skip")]
+    minimum_should_match: Option<MinimumShouldMatch>,
+    #[serde(skip_serializing_if = "ShouldSkip::should_skip")]
+    operator: Option<String>,
+    #[serde(skip_serializing_if = "ShouldSkip::should_skip")]
+    prefix_length: Option<u64>,
+    #[serde(skip_serializing_if = "ShouldSkip::should_skip")]
+    rewrite: Option<String>,
+    #[serde(skip_serializing_if = "ShouldSkip::should_skip")]
+    slop: Option<i64>,
+    #[serde(skip_serializing_if = "ShouldSkip::should_skip")]
+    zero_terms_query: Option<ZeroTermsQuery>,
+}
+
+impl Query {
+    pub fn build_match_phrase<A, B>(field: A, query: B) -> MatchPhraseQuery
+    where
+        A: Into<String>,
+        B: Into<JsonVal>,
+    {
+        MatchPhraseQuery(FieldBasedQuery::new(
+            field.into(),
+            MatchPhraseQueryInner {
+                query: query.into(),
+                ..Default::default()
+            },
+            NoOuter,
+        ))
+    }
+}
+
+impl MatchPhraseQuery {
+    add_inner_field!(with_lenient, lenient, bool);
+    add_inner_field!(with_analyzer, analyzer, String);
+    add_inner_field!(with_boost, boost, f64);
+    add_inner_field!(with_operator, operator, String);
+    add_inner_field!(
+        with_minimum_should_match,
+        minimum_should_match,
+        MinimumShouldMatch
+    );
+    add_inner_field!(with_fuzziness, fuzziness, Fuzziness);
+    add_inner_field!(with_prefix_length, prefix_length, u64);
+    add_inner_field!(with_max_expansions, max_expansions, u64);
+    add_inner_field!(with_rewrite, rewrite, String);
+    add_inner_field!(with_zero_terms_query, zero_terms_query, ZeroTermsQuery);
+    add_inner_field!(with_slop, slop, i64);
+
+    build!(MatchPhrase);
 }
 
 /// Multi Match Query

@@ -256,6 +256,7 @@ pub enum Query {
 
     // Full-text queries
     Match(Box<full_text::MatchQuery>),
+    MatchPhrase(Box<full_text::MatchPhraseQuery>),
     MultiMatch(Box<full_text::MultiMatchQuery>),
     Common(Box<full_text::CommonQuery>),
     QueryString(Box<full_text::QueryStringQuery>),
@@ -338,6 +339,7 @@ impl Serialize for Query {
 
             // Full-text
             Match(ref q) => map_ser.serialize_entry("match", q),
+            MatchPhrase(ref q) => map_ser.serialize_entry("match_phrase", q),
             MultiMatch(ref q) => map_ser.serialize_entry("multi_match", q),
             Common(ref q) => map_ser.serialize_entry("common", q),
             QueryString(ref q) => map_ser.serialize_entry("query_string", q),
