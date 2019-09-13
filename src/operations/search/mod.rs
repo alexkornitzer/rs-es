@@ -859,8 +859,15 @@ pub struct SearchHitsHitsResult<T> {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(untagged)]
+pub enum SearchHitsTotal {
+    Legacy(u64),                            // ES6-
+    Total { value: u64, relation: String }, // ES7+
+}
+
+#[derive(Debug, Deserialize, Serialize)]
 pub struct SearchHitsResult<T> {
-    pub total: u64,
+    pub total: SearchHitsTotal,
     pub hits: Vec<SearchHitsHitsResult<T>>,
 }
 
