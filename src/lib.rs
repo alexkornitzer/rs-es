@@ -85,6 +85,40 @@ fn do_req(resp: reqwest::Response) -> Result<reqwest::Response, EsError> {
     }
 }
 
+pub struct ClientBuilder {
+    base_url: String,
+    http: Option<reqwest::Client>,
+}
+
+impl ClientBuilder {
+    pub fn new() -> Self {
+        ClientBuilder {
+            base_url: String::from("http://localhost:9200"),
+            http: None,
+        }
+    }
+
+    pub fn client(mut self, client: reqwest::Client) -> Self {
+        self.http = Some(client);
+        self
+    }
+
+    pub fn url<S>(mut self, url: S) -> Self
+    where
+        S: Into<String>,
+    {
+        self.base_url = url.into();
+        self
+    }
+
+    pub fn build(self) -> Result<Client, reqwest::UrlError> {
+        Ok(Client {
+            base_url: Url::parse(&self.base_url)?,
+            http_client: self.http.unwrap_or(reqwest::Client::new()),
+        })
+    }
+}
+
 /// The core of the ElasticSearch client, owns a HTTP connection.
 ///
 /// Each instance of `Client` is reusable, but only one thread can use each one
@@ -138,7 +172,7 @@ macro_rules! es_op {
             log::info!("Doing {} on {}", stringify!($n), url);
             self.do_es_op(url, |url| self.http_client.$cn(url.clone()))
         }
-    }
+    };
 }
 
 /// Create a HTTP function with a request body for the given method
@@ -147,8 +181,9 @@ macro_rules! es_op {
 macro_rules! es_body_op {
     ($n:ident,$cn:ident) => {
         fn $n<E>(&mut self, url: &str, body: &E) -> Result<reqwest::Response, EsError>
-            where E: Serialize {
-
+        where
+            E: Serialize,
+        {
             log::info!("Doing {} on {}", stringify!($n), url);
             let json_string = serde_json::to_string(body)?;
             log::debug!("With body: {}", &json_string);
@@ -157,7 +192,7 @@ macro_rules! es_body_op {
                 self.http_client.$cn(url.clone()).body(json_string)
             })
         }
-    }
+    };
 }
 
 impl Client {
@@ -186,6 +221,10 @@ impl Client {
                 .expect("Failed to build client"),
             base_url: url,
         })
+    }
+
+    pub fn builder() -> ClientBuilder {
+        ClientBuilder::new()
     }
 
     /// Take a nearly complete ElasticSearch URL, and stick
