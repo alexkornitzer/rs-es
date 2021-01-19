@@ -841,7 +841,7 @@ macro_rules! add_aggs_ref {
         pub fn aggs_ref(&self) -> Option<&AggregationsResult> {
             self.aggs.as_ref()
         }
-    }
+    };
 }
 
 macro_rules! return_error {

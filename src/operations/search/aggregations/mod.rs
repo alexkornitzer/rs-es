@@ -19,22 +19,33 @@
 #[macro_use]
 mod common;
 
+#[macro_use]
 pub mod bucket;
+pub mod composite;
 pub mod metrics;
 
 use std::collections::HashMap;
 
 use serde::ser::{SerializeMap, Serializer};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
 use crate::error::EsError;
 
-use self::{bucket::BucketAggregationResult, metrics::MetricsAggregationResult};
+use self::{
+    bucket::BucketAggregationResult, composite::CompositeAggregationResult,
+    metrics::MetricsAggregationResult,
+};
 
 /// Aggregations are either metrics or bucket-based aggregations
 #[derive(Debug)]
 pub enum Aggregation<'a> {
+    /// A composite aggregation
+    Composite(
+        composite::CompositeAggregation<'a>,
+        Option<Aggregations<'a>>,
+    ),
+
     /// A metric aggregation (e.g. min)
     Metrics(metrics::MetricsAggregation<'a>),
 
@@ -50,6 +61,10 @@ impl<'a> Serialize for Aggregation<'a> {
     {
         use self::Aggregation::*;
         let mut map = (serializer.serialize_map(Some(match self {
+            Composite(_, ref opt_aggs) => match opt_aggs {
+                Some(_) => 2,
+                None => 1,
+            },
             Metrics(_) => 1,
             Bucket(_, ref opt_aggs) => match opt_aggs {
                 Some(_) => 2,
@@ -57,6 +72,15 @@ impl<'a> Serialize for Aggregation<'a> {
             },
         })))?;
         match self {
+            Composite(ref composite_agg, ref opt_aggs) => {
+                map.serialize_entry("composite", composite_agg)?;
+                match opt_aggs {
+                    Some(ref other_aggs) => {
+                        map.serialize_entry("aggregations", other_aggs)?;
+                    }
+                    None => (),
+                }
+            }
             Metrics(ref metric_agg) => {
                 let agg_name = metric_agg.details();
                 map.serialize_entry(agg_name, metric_agg)?;
@@ -129,6 +153,9 @@ impl<'a, A: Into<Aggregation<'a>>> From<(&'a str, A)> for Aggregations<'a> {
 /// The data returned varies depending on aggregation type
 #[derive(Debug, Serialize, Deserialize)]
 pub enum AggregationResult {
+    /// Results of composite aggregations
+    Composite(CompositeAggregationResult),
+
     /// Results of metrics aggregations
     Metrics(MetricsAggregationResult),
 
@@ -161,6 +188,9 @@ fn object_to_result(
                 }
                 Aggregation::Bucket(ref ba, ref aggs) => {
                     AggregationResult::Bucket(BucketAggregationResult::from(ba, json, aggs)?)
+                }
+                Composite(ref _ca, ref aggs) => {
+                    AggregationResult::Composite(CompositeAggregationResult::from(json, aggs)?)
                 }
             },
         );
