@@ -327,10 +327,6 @@ impl<'de> Deserialize<'de> for ActionResult {
     }
 }
 
-fn zero() -> u64 {
-    0
-}
-
 #[derive(Debug, serde::Deserialize)]
 pub struct ActionResultErrorCause {
     #[serde(rename = "type")]
@@ -348,16 +344,21 @@ pub struct ActionResultError {
 
 #[derive(Debug, serde::Deserialize)]
 pub struct ActionResultInner {
+    // FIXME: The following are missing:
+    // result
+    // _seq_no
+    // _primary_term
     #[serde(rename = "_index")]
     pub index: String,
     #[serde(rename = "_type")]
     pub doc_type: String,
     // HACK: This is missing on error...
-    #[serde(rename = "_version", default = "zero")]
-    pub version: u64,
+    #[serde(rename = "_version")]
+    pub version: Option<u64>,
     pub status: u64,
-    #[serde(rename = "_shards")]
-    pub shards: ShardCountResult,
+    #[serde(default, rename = "_shards")]
+    pub shards: Option<ShardCountResult>,
+    #[serde(default)]
     pub found: Option<bool>,
     #[serde(default)]
     pub error: Option<ActionResultError>,
