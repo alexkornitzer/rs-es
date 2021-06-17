@@ -327,18 +327,40 @@ impl<'de> Deserialize<'de> for ActionResult {
     }
 }
 
+fn zero() -> u64 {
+    0
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct ActionResultErrorCause {
+    #[serde(rename = "type")]
+    ty: String,
+    reason: String,
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct ActionResultError {
+    #[serde(rename = "type")]
+    ty: String,
+    reason: String,
+    caused_by: ActionResultErrorCause,
+}
+
 #[derive(Debug, serde::Deserialize)]
 pub struct ActionResultInner {
     #[serde(rename = "_index")]
     pub index: String,
     #[serde(rename = "_type")]
     pub doc_type: String,
-    #[serde(rename = "_version")]
+    // HACK: This is missing on error...
+    #[serde(rename = "_version", default = "zero")]
     pub version: u64,
     pub status: u64,
     #[serde(rename = "_shards")]
     pub shards: ShardCountResult,
     pub found: Option<bool>,
+    #[serde(default)]
+    pub error: Option<ActionResultError>,
 }
 
 /// The result of a bulk operation
