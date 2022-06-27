@@ -339,7 +339,8 @@ pub struct ActionResultError {
     #[serde(rename = "type")]
     ty: String,
     reason: String,
-    caused_by: ActionResultErrorCause,
+    #[serde(default)]
+    caused_by: Option<ActionResultErrorCause>,
 }
 
 #[derive(Debug, serde::Deserialize)]
