@@ -62,8 +62,8 @@ impl From<serde_json::error::Error> for EsError {
     }
 }
 
-impl<'a> From<&'a mut reqwest::Response> for EsError {
-    fn from(err: &'a mut reqwest::Response) -> EsError {
+impl<'a> From<&'a mut reqwest::blocking::Response> for EsError {
+    fn from(err: &'a mut reqwest::blocking::Response) -> EsError {
         let mut body = String::new();
         match err.read_to_string(&mut body) {
             Ok(_) => (),

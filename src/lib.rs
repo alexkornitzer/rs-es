@@ -42,7 +42,7 @@ pub mod units;
 
 use std::time;
 
-use reqwest::{header::CONTENT_TYPE, RequestBuilder, StatusCode, Url};
+use reqwest::{blocking::RequestBuilder, header::CONTENT_TYPE, StatusCode, Url};
 
 use serde::{de::DeserializeOwned, ser::Serialize};
 
@@ -55,7 +55,7 @@ pub trait EsResponse {
         R: DeserializeOwned;
 }
 
-impl EsResponse for reqwest::Response {
+impl EsResponse for reqwest::blocking::Response {
     fn status_code(&self) -> StatusCode {
         self.status()
     }
@@ -76,7 +76,7 @@ impl EsResponse for reqwest::Response {
 ///
 /// This function is exposed to allow extensions to certain operations, it is
 /// not expected to be used by consumers of the library
-fn do_req(resp: reqwest::Response) -> Result<reqwest::Response, EsError> {
+fn do_req(resp: reqwest::blocking::Response) -> Result<reqwest::blocking::Response, EsError> {
     let mut resp = resp;
     let status = resp.status();
     match status {
@@ -87,7 +87,7 @@ fn do_req(resp: reqwest::Response) -> Result<reqwest::Response, EsError> {
 
 pub struct ClientBuilder {
     base_url: String,
-    http: Option<reqwest::Client>,
+    http: Option<reqwest::blocking::Client>,
 }
 
 impl ClientBuilder {
@@ -98,7 +98,7 @@ impl ClientBuilder {
         }
     }
 
-    pub fn client(mut self, client: reqwest::Client) -> Self {
+    pub fn client(mut self, client: reqwest::blocking::Client) -> Self {
         self.http = Some(client);
         self
     }
@@ -111,10 +111,10 @@ impl ClientBuilder {
         self
     }
 
-    pub fn build(self) -> Result<Client, reqwest::UrlError> {
+    pub fn build(self) -> Result<Client, url::ParseError> {
         Ok(Client {
             base_url: Url::parse(&self.base_url)?,
-            http_client: self.http.unwrap_or(reqwest::Client::new()),
+            http_client: self.http.unwrap_or(reqwest::blocking::Client::new()),
         })
     }
 }
@@ -145,7 +145,7 @@ impl ClientBuilder {
 #[derive(Debug, Clone)]
 pub struct Client {
     base_url: Url,
-    http_client: reqwest::Client,
+    http_client: reqwest::blocking::Client,
 }
 
 impl Client {
@@ -153,7 +153,7 @@ impl Client {
         &self,
         url: &str,
         action: impl FnOnce(Url) -> RequestBuilder,
-    ) -> Result<reqwest::Response, EsError> {
+    ) -> Result<reqwest::blocking::Response, EsError> {
         let url = self.full_url(url);
         let username = self.base_url.username();
         let mut method = action(url);
@@ -168,7 +168,7 @@ impl Client {
 /// Create a HTTP function for the given method (GET/PUT/POST/DELETE)
 macro_rules! es_op {
     ($n:ident,$cn:ident) => {
-        fn $n(&self, url: &str) -> Result<reqwest::Response, EsError> {
+        fn $n(&self, url: &str) -> Result<reqwest::blocking::Response, EsError> {
             log::info!("Doing {} on {}", stringify!($n), url);
             self.do_es_op(url, |url| self.http_client.$cn(url.clone()))
         }
@@ -180,7 +180,7 @@ macro_rules! es_op {
 ///
 macro_rules! es_body_op {
     ($n:ident,$cn:ident) => {
-        fn $n<E>(&mut self, url: &str, body: &E) -> Result<reqwest::Response, EsError>
+        fn $n<E>(&mut self, url: &str, body: &E) -> Result<reqwest::blocking::Response, EsError>
         where
             E: Serialize,
         {
@@ -197,11 +197,11 @@ macro_rules! es_body_op {
 
 impl Client {
     /// Create a new client
-    pub fn init(url_s: &str) -> Result<Client, reqwest::UrlError> {
+    pub fn init(url_s: &str) -> Result<Client, url::ParseError> {
         let url = Url::parse(url_s)?;
 
         Ok(Client {
-            http_client: reqwest::Client::new(),
+            http_client: reqwest::blocking::Client::new(),
             base_url: url,
         })
     }
@@ -211,14 +211,16 @@ impl Client {
     pub fn init_with_timeout(
         url_s: &str,
         timeout: Option<time::Duration>,
-    ) -> Result<Client, reqwest::UrlError> {
+    ) -> Result<Client, url::ParseError> {
         let url = Url::parse(url_s)?;
-
+        let builder = reqwest::blocking::Client::builder();
+        let builder = if let Some(timeout) = timeout {
+            builder.timeout(timeout)
+        } else {
+            builder
+        };
         Ok(Client {
-            http_client: reqwest::Client::builder()
-                .timeout(timeout)
-                .build()
-                .expect("Failed to build client"),
+            http_client: builder.build().expect("Failed to build client"),
             base_url: url,
         })
     }
