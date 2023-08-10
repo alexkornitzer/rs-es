@@ -80,16 +80,6 @@ impl<'a> From<&'a mut reqwest::Response> for EsError {
 }
 
 impl Error for EsError {
-    fn description(&self) -> &str {
-        match *self {
-            EsError::EsError(ref err) => err,
-            EsError::EsServerError(ref err) => err,
-            EsError::HttpError(ref err) => err.description(),
-            EsError::IoError(ref err) => err.description(),
-            EsError::JsonError(ref err) => err.description(),
-        }
-    }
-
     fn cause(&self) -> Option<&dyn Error> {
         match *self {
             EsError::EsError(_) => None,

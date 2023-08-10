@@ -330,17 +330,17 @@ impl<'de> Deserialize<'de> for ActionResult {
 #[derive(Debug, serde::Deserialize)]
 pub struct ActionResultErrorCause {
     #[serde(rename = "type")]
-    ty: String,
-    reason: String,
+    pub ty: String,
+    pub reason: String,
 }
 
 #[derive(Debug, serde::Deserialize)]
 pub struct ActionResultError {
     #[serde(rename = "type")]
-    ty: String,
-    reason: String,
+    pub ty: String,
+    pub reason: String,
     #[serde(default)]
-    caused_by: Option<ActionResultErrorCause>,
+    pub caused_by: Option<ActionResultErrorCause>,
 }
 
 #[derive(Debug, serde::Deserialize)]

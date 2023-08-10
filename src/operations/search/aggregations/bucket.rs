@@ -846,7 +846,7 @@ macro_rules! add_aggs_ref {
 
 macro_rules! return_error {
     ($e:expr) => {
-        return Err(EsError::EsError($e));
+        return Err(EsError::EsError($e))
     };
 }
 
