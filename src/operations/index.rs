@@ -131,19 +131,23 @@ impl Client {
     }
 }
 
+fn fake_type() -> String {
+    "_doc".to_owned()
+}
+
 /// The result of an index operation
 #[derive(Debug, Deserialize)]
 pub struct IndexResult {
     #[serde(rename = "_index")]
     pub index: String,
-    #[serde(rename = "_type")]
+    #[serde(rename = "_type", default = "fake_type")]
     pub doc_type: String,
     #[serde(rename = "_id")]
     pub id: String,
     #[serde(rename = "_version")]
     pub version: u64,
     #[serde(default)]
-    pub created: Option<bool>,  // NOTE: Removed in ES6
+    pub created: Option<bool>, // NOTE: Removed in ES6
 }
 
 #[cfg(test)]

@@ -96,13 +96,17 @@ impl Client {
     }
 }
 
+fn fake_type() -> String {
+    "_doc".to_owned()
+}
+
 /// Result of a DELETE operation
 #[derive(Debug, Deserialize)]
 pub struct DeleteResult {
     pub found: bool,
     #[serde(rename = "_index")]
     pub index: String,
-    #[serde(rename = "_type")]
+    #[serde(rename = "_type", default = "fake_type")]
     pub doc_type: String,
     #[serde(rename = "_id")]
     pub id: String,

@@ -343,6 +343,10 @@ pub struct ActionResultError {
     pub caused_by: Option<ActionResultErrorCause>,
 }
 
+fn fake_type() -> String {
+    "_doc".to_owned()
+}
+
 #[derive(Debug, serde::Deserialize)]
 pub struct ActionResultInner {
     // FIXME: The following are missing:
@@ -351,7 +355,7 @@ pub struct ActionResultInner {
     // _primary_term
     #[serde(rename = "_index")]
     pub index: String,
-    #[serde(rename = "_type")]
+    #[serde(rename = "_type", default = "fake_type")]
     pub doc_type: String,
     // HACK: This is missing on error...
     #[serde(rename = "_version")]
